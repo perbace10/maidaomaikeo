@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Các nhân vật của mình</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Be+Vietnam+Pro:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#201a3d; --paper:#f1eeff; --card:#ffffff;
+  --blue:#5b7cff; --lemon:#ffd84d; --mint:#62d9ae; --pink:#ff90ba; --peach:#ffb48a;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Be Vietnam Pro",system-ui,sans-serif; line-height:1.6;
+  background-image:radial-gradient(rgba(32,26,61,.12) 1.2px,transparent 1.2px);
+  background-size:22px 22px;
+}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+header{padding:64px 0 36px}
+.faces{display:flex;margin-bottom:22px}
+.faces span{
+  width:52px;height:52px;border-radius:50%;border:3px solid var(--ink);
+  margin-right:-12px;display:grid;place-items:center;
+  font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:20px;
+}
+h1{
+  font-family:"Bricolage Grotesque",sans-serif;font-weight:800;
+  font-size:clamp(2.4rem,7vw,4.4rem);line-height:1.02;margin:0 0 14px;letter-spacing:-.02em;
+}
+header p{max-width:52ch;margin:0;font-size:1.08rem}
+
+.tools{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:8px 0 28px}
+.search{
+  flex:1 1 240px;padding:12px 16px;font:inherit;color:var(--ink);
+  background:#fff;border:3px solid var(--ink);border-radius:14px;
+}
+.search:focus-visible,.chip:focus-visible,.btn:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{
+  font:inherit;font-weight:500;font-size:.92rem;cursor:pointer;color:var(--ink);
+  background:#fff;border:2px solid var(--ink);border-radius:999px;padding:6px 14px;
+}
+.chip[aria-pressed="true"]{background:var(--ink);color:#fff}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:26px;padding-bottom:56px}
+.card{
+  background:var(--card);border:3px solid var(--ink);border-radius:22px;
+  box-shadow:6px 6px 0 var(--ink);padding:22px;display:flex;flex-direction:column;gap:12px;
+  transition:transform .15s,box-shadow .15s;
+}
+.card:hover{transform:translate(-3px,-3px);box-shadow:9px 9px 0 var(--ink)}
+.top{display:flex;align-items:center;gap:14px}
+.avatar{
+  width:64px;height:64px;flex:none;border-radius:50%;border:3px solid var(--ink);
+  display:grid;place-items:center;overflow:hidden;
+  font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:28px;
+}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.card h2{font-family:"Bricolage Grotesque",sans-serif;font-size:1.4rem;margin:0;line-height:1.15}
+.tag{display:inline-block;font-size:.8rem;font-weight:600;padding:1px 10px;border:2px solid var(--ink);border-radius:999px;margin-top:4px}
+.card p{margin:0;flex:1;font-size:.96rem}
+.btn{
+  align-self:flex-start;text-decoration:none;color:var(--ink);font-weight:600;
+  background:var(--lemon);border:3px solid var(--ink);border-radius:12px;padding:8px 16px;
+}
+.btn:hover{background:var(--ink);color:#fff}
+.empty{grid-column:1/-1;text-align:center;padding:40px 0;font-weight:500}
+footer{border-top:3px solid var(--ink);padding:22px 0 40px;font-size:.9rem}
+@media (prefers-reduced-motion:reduce){.card{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="faces" id="faces" aria-hidden="true"></div>
+    <h1>Các nhân vật của mình</h1>
+    <p>Mỗi nhân vật được tạo bằng Google AI Studio. Chọn một bạn và bấm nút để bắt đầu trò chuyện.</p>
+  </header>
+
+  <div class="tools">
+    <input class="search" id="search" type="search" placeholder="Tìm theo tên hoặc mô tả" aria-label="Tìm nhân vật">
+    <div class="chips" id="chips"></div>
+  </div>
+
+  <main class="grid" id="grid"></main>
+
+  <footer>Làm bằng GitHub Pages. Cập nhật lần cuối: <span id="year"></span></footer>
+</div>
+
+<script>
+/* ============================================================
+   CHỈ CẦN SỬA PHẦN NÀY ĐỂ THÊM / XÓA / ĐỔI NHÂN VẬT
+   - name:  tên nhân vật
+   - tag:   nhóm (dùng để lọc)
+   - desc:  mô tả ngắn
+   - url:   đường link AI Studio của nhân vật
+   - image: (tùy chọn) link ảnh đại diện; bỏ trống sẽ dùng chữ cái đầu
+   ============================================================ */
+const characters = [
+  { name: "Mèo Kế Toán", tag: "Công việc", desc: "Giúp bạn ghi chép chi tiêu và nhắc việc, nói chuyện nhẹ nhàng.", url: "https://aistudio.google.com/", image: "" },
+  { name: "Thầy Sử", tag: "Học tập", desc: "Kể chuyện lịch sử Việt Nam như đang ngồi nghe ông kể.", url: "https://aistudio.google.com/", image: "" },
+  { name: "Bạn Tâm Sự", tag: "Trò chuyện", desc: "Một người bạn biết lắng nghe, luôn sẵn sàng vào buổi tối.", url: "https://aistudio.google.com/", image: "" },
+  { name: "Đầu Bếp Nhí", tag: "Đời sống", desc: "Gợi ý món ăn từ những nguyên liệu bạn đang có trong tủ lạnh.", url: "https://aistudio.google.com/", image: "" }
+];
+/* ============================================================ */
+
+const colors = ["#5b7cff", "#ffd84d", "#62d9ae", "#ff90ba", "#ffb48a"];
+const grid = document.getElementById("grid");
+const chipsBox = document.getElementById("chips");
+const search = document.getElementById("search");
+let activeTag = "Tất cả";
+
+function makeAvatar(c, i) {
+  const el = document.createElement("div");
+  el.className = "avatar";
+  el.style.background = colors[i % colors.length];
+  if (c.image) {
+    const img = document.createElement("img");
+    img.src = c.image; img.alt = "";
+    img.onerror = () => { img.remove(); el.textContent = c.name.trim().charAt(0).toUpperCase(); };
+    el.appendChild(img);
+  } else {
+    el.textContent = c.name.trim().charAt(0).toUpperCase();
+  }
+  return el;
+}
+
+function render() {
+  const q = search.value.trim().toLowerCase();
+  grid.innerHTML = "";
+  let shown = 0;
+  characters.forEach((c, i) => {
+    const okTag = activeTag === "Tất cả" || c.tag === activeTag;
+    const okText = !q || (c.name + " " + c.desc).toLowerCase().includes(q);
+    if (!okTag || !okText) return;
+    shown++;
+
+    const card = document.createElement("article");
+    card.className = "card";
+
+    const top = document.createElement("div");
+    top.className = "top";
+    top.appendChild(makeAvatar(c, i));
+    const box = document.createElement("div");
+    const h = document.createElement("h2"); h.textContent = c.name;
+    const t = document.createElement("span"); t.className = "tag"; t.textContent = c.tag;
+    t.style.background = colors[i % colors.length];
+    box.append(h, t);
+    top.appendChild(box);
+
+    const p = document.createElement("p"); p.textContent = c.desc;
+    const a = document.createElement("a");
+    a.className = "btn"; a.href = c.url; a.target = "_blank"; a.rel = "noopener";
+    a.textContent = "Trò chuyện";
+
+    card.append(top, p, a);
+    grid.appendChild(card);
+  });
+  if (!shown) {
+    const e = document.createElement("div");
+    e.className = "empty";
+    e.textContent = "Không tìm thấy nhân vật nào. Thử từ khóa khác hoặc chọn nhóm Tất cả.";
+    grid.appendChild(e);
+  }
+}
+
+function buildChips() {
+  const tags = ["Tất cả", ...new Set(characters.map(c => c.tag))];
+  tags.forEach(tag => {
+    const b = document.createElement("button");
+    b.className = "chip"; b.textContent = tag;
+    b.setAttribute("aria-pressed", tag === activeTag);
+    b.onclick = () => {
+      activeTag = tag;
+      chipsBox.querySelectorAll(".chip").forEach(x => x.setAttribute("aria-pressed", x === b));
+      render();
+    };
+    chipsBox.appendChild(b);
+  });
+}
+
+// hàng avatar trên đầu trang
+const faces = document.getElementById("faces");
+characters.slice(0, 5).forEach((c, i) => {
+  const s = document.createElement("span");
+  s.style.background = colors[i % colors.length];
+  s.textContent = c.name.trim().charAt(0).toUpperCase();
+  faces.appendChild(s);
+});
+
+document.getElementById("year").textContent = new Date().toLocaleDateString("vi-VN");
+search.addEventListener("input", render);
+buildChips();
+render();
+</script>
+</body>
+</html>
